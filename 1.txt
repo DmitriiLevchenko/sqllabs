@@ -55,6 +55,13 @@ use database_name;
 ALTER TABLE table_name DROP COLUMN author
 
 d. Зміна порядку сортування індексу і призначення його унікальності
-???
+use database_name;
+
+CREATE UNIQUE INDEX name_ind ON table_name (name DESC);
+
+e. Видалення індексу
+use database_name;
+
+ALTER TABLE table_name DROP INDEX name_ind 
 
 

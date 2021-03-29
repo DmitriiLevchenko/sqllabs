@@ -74,6 +74,6 @@ SELECT * from books WHERE NOT EXISTS (SELECT * from publishers WHERE name="BHV" 
 UNION 
 (SELECT * from book_categories)) ORDER BY name
 20.	Вивести відсортований в зворотному порядку загальний список перших слів, назв книг і категорій що не повторюються. Використовувати union.
-((SELECT SUBSTRING_INDEX(book_name, ' ', 1) as name  from books)
+SELECT DISTINCT name from ((SELECT SUBSTRING_INDEX(book_name, ' ', 1) as name  from books)
  UNION
-(SELECT SUBSTRING_INDEX(name,' ',1) as name from book_categories)) ORDER BY name DESC
+(SELECT SUBSTRING_INDEX(name,' ',1) as name from book_categories))as names ORDER BY name DESC

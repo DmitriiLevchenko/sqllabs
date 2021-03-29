@@ -1,0 +1,34 @@
+CREATE TABLE IF NOT EXISTS publishers (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  name varchar(255) UNIQUE NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS formats (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  name varchar(255) UNIQUE NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS book_themes (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  name varchar(255) UNIQUE NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS book_categories (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  name varchar(255) UNIQUE NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS books (
+  n INT PRIMARY KEY,
+  code INT NOT NULL,
+  is_new BOOLEAN DEFAULT TRUE,
+  book_name VARCHAR(255) NOT NULL,
+  price DECIMAL CHECK(price > 0) NOT NULL,
+  publisher_id INT NOT NULL REFERENCES publishers(id),
+  pages_count INT NOT NULL,
+  format_id INT REFERENCES formats(id),
+  date DATE NOT NULL,
+  circulation INT NOT NULL,
+  theme_id INT NOT NULL REFERENCES book_themes(id),
+  category_id INT NOT NULL REFERENCES book_categories(id)
+);

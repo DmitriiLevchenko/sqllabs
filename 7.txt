@@ -1,0 +1,162 @@
+1.	Вивести значення наступних колонок: назва книги, ціна, назва видавництва, формат.
+DELIMITER //
+
+CREATE PROCEDURE GetBookData()
+BEGIN
+SELECT b.book_name , b.price, p.name as publishers,f.name as formats FROM books as b
+    JOIN publishers as p
+    ON b.publisher = p.id
+    
+    JOIN formats as f
+    ON b.format = f.id;
+END
+DELIMITER ;
+
+CALL GetBookData;
+2.	Вивести значення наступних колонок: тема, категорія, назва книги, назва видавництва. Фільтр по темам і категоріям.
+DELIMITER //
+
+CREATE PROCEDURE GetBookData2()
+BEGIN
+SELECT b.theme, c.name as categoria,b.book_name ,   p.name as publishers FROM books as b INNER JOIN book_categories as c ON b.category = c.id
+INNER JOIN publishers as p ON b.publisher = p.id;
+END
+DELIMITER ;
+
+CALL GetBookData2;
+3.	Вивести книги видавництва 'BHV', видані після 2000 р
+DELIMITER //
+
+CREATE PROCEDURE GetBookData3()
+BEGIN
+SELECT b.book_name from books as b INNER JOIN publishers as p ON b.publisher = p.id WHERE p.name = "BHV" AND YEAR(b.date) > 2000;
+END //
+
+DELIMITER ;
+
+CALL GetBookData23;
+4.	Вивести загальну кількість сторінок по кожній назві категорії. Фільтр по спадаючій / зростанню кількості сторінок.
+DELIMITER //
+
+CREATE PROCEDURE GetBookData4()
+BEGIN
+SELECT bc.name,COUNT(bc.name)  from books as b INNER JOIN book_categories as bc ON b.publisher = bc.id GROUP BY bc.name ORDER BY COUNT(bc.name) DESC;
+END //
+
+DELIMITER ;
+
+CALL GetBookData4;
+5.	Вивести середню вартість книг по темі 'Використання ПК' і категорії 'Linux'.
+CREATE PROCEDURE GetBookData4()
+BEGIN
+SELECT bc.name,COUNT(bc.name)  from books as b INNER JOIN book_categories as bc ON b.publisher = bc.id GROUP BY bc.name ORDER BY COUNT(bc.name) DESC;
+END //
+
+DELIMITER ;
+
+CALL GetBookData4;
+6.	Вивести всі дані універсального відношення.
+DELIMITER //
+
+CREATE PROCEDURE GetBookData6()
+BEGIN
+SELECT b.n,b.code,b.is_new,b.book_name,b.price,p.name,f.name,b.date,b.circulation,bt.name,bc.name FROM
+books as b
+INNER JOIN formats as f ON b.format = f.id
+INNER JOIN publishers as p ON b.publisher = p.id
+INNER JOIN book_themes as bt ON b.theme = bt.id
+INNER JOIN book_categories as bc ON b.category = bc.id;
+END //
+DELIMITER ;
+7.	Вивести пари книг, що мають однакову кількість сторінок.
+DELIMITER //
+
+CREATE PROCEDURE GetBookData7()
+BEGIN
+SELECT b.book_name, b2.book_name from books as b JOIN books as b2 ON b.pages_count = b.pages_count AND b.n != b2.n;
+END //
+DELIMITER ;
+
+CALL GetBookData7;
+8.	Вивести тріади книг, що мають однакову ціну.
+DELIMITER //
+
+CREATE PROCEDURE GetBookData8()
+BEGIN
+SELECT b.book_name, b2.book_name,b3.book_name from books as b JOIN books as b2 ON b.price = b.price AND b.n != b2.n JOIN books as b3 ON b.price = b3.price  AND b.n != b3.n;
+END //
+DELIMITER ;
+
+CALL GetBookData8;
+9.	Вивести всі книги категорії 'C ++'.
+DELIMITER //
+
+CREATE PROCEDURE GetBookData9()
+BEGIN
+SELECT * from books  WHERE category IN (SELECT id from book_categories WHERE name = "C&C++");
+END //
+DELIMITER ;
+
+CALL GetBookData9;
+10.	Вивести список видавництв, у яких розмір книг перевищує 400 сторінок.
+DELIMITER //
+
+CREATE PROCEDURE GetBookData10()
+BEGIN
+SELECT *
+FROM publishers
+WHERE (SELECT MIN(pages_count) FROM books WHERE books.publisher = publishers.id) > 400;
+END //
+DELIMITER ;
+
+CALL GetBookData10;
+11.	Вивести список категорій за якими більше 3-х книг.
+DELIMITER //
+
+CREATE PROCEDURE GetBookData12()
+BEGIN
+SELECT *
+  FROM book_categories
+  WHERE (SELECT COUNT(*) FROM books WHERE books.category = book_categories.id) > min_books_count;
+END //
+DELIMITER ;
+12.	Вивести список книг видавництва 'BHV', якщо в списку є хоча б одна книга цього видавництва.
+DELIMITER //
+
+CREATE PROCEDURE GetBookData11()
+BEGIN
+SELECT * from books WHERE EXISTS (SELECT * from publishers WHERE name="BHV" AND publishers.id = books.publisher);
+END //
+DELIMITER ;
+
+CALL GetBookData11;
+13.	Вивести список книг видавництва 'BHV', якщо в списку немає жодної книги цього видавництва.
+DELIMITER //
+
+CREATE PROCEDURE GetBookData13()
+BEGIN
+SELECT * from books WHERE NOT EXISTS (SELECT * from publishers WHERE name="BHV" AND publishers.id = books.publisher);
+END //
+DELIMITER ;
+
+CALL GetBookData13;
+14.	Вивести відсортоване загальний список назв тем і категорій.
+DELIMITER //
+
+CREATE PROCEDURE GetBookData14()
+BEGIN
+SELECT b.book_name as name , c.name as categori from books as b INNER JOIN book_categories as c ON c.id = b.category;
+END //
+DELIMITER ;
+
+CALL GetBookData14;
+15.	Вивести відсортований в зворотному порядку загальний список перших слів назв книг і категорій що не повторюються
+DELIMITER //
+
+CREATE PROCEDURE GetBookData15()
+BEGIN
+SELECT DISTINCT name from ((SELECT SUBSTRING_INDEX(book_name, ' ', 1) as name  from books)
+ UNION
+(SELECT SUBSTRING_INDEX(name,' ',1) as name from book_categories))as names ORDER BY name DESC;
+END //
+DELIMITER ;

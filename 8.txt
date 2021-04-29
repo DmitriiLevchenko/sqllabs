@@ -1,0 +1,141 @@
+1.	Кількість тем може бути в діапазоні від 5 до 10.
+DELIMITER $$
+
+CREATE TRIGGER book_trigger_1 BEFORE INSERT ON book_themes
+FOR EACH ROW
+
+IF(SELECT COUNT(*) from publishers) > 10
+THEN 
+SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Кількість більша 10';
+ELSEIF (SELECT COUNT(*) from publishers) < 5
+THEN
+SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Кількість менша 5';
+END IF;
+$$
+DELIMITER ;
+2.	Новинкою може бути тільки книга видана в поточному році.
+DELIMITER $$
+CREATE TRIGGER book_trigger_2 AFTER INSERT ON books
+FOR EACH ROW
+BEGIN 
+IF  NEW.is_new = true
+THEN
+IF (SELECT YEAR(NEW.date)) != (SELECT YEAR(CURDATE()))
+THEN
+SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Не новинка';
+END IF;
+END IF;
+END$$
+3.	Книга з кількістю сторінок до 100 не може коштувати більше 10 $, до 200 - 20 $, до 300 - 30 $.
+DELIMITER $$
+CREATE TRIGGER book_trigger_3 AFTER INSERT ON books
+FOR EACH ROW
+BEGIN
+    IF NEW.pages_count > 0  && NEW.pages_count < 100 && NEW.price > 10 
+    THEN
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Ціна більше 10';
+    
+    ELSEIF NEW.pages_count > 100  && NEW.pages_count < 200 && NEW.price > 20 
+    THEN
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Ціна більше 20';
+    
+    ELSEIF NEW.pages_count > 200   && NEW.pages_count < 300 && NEW.price > 30
+    THEN
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Ціна більше 30';
+    END IF;
+END$$
+DELIMITER ;
+4.	Видавництво "BHV" не випускає книги накладом меншим 5000, а видавництво Diasoft - 10000.
+DELIMITER $$
+CREATE TRIGGER book_trigger_4 AFTER INSERT ON books
+FOR EACH ROW
+BEGIN
+   IF((SELECT id from publishers WHERE name = "BHV") = NEW.publisher && NEW.pages_count < 5000) ||
+   ((SELECT id from publishers WHERE name = "Diasoft") = NEW.publisher && NEW.pages_count < 10000)
+    THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Видавництво "BHV" не випускає книги накладом меншим 5000, а видавництво Diasoft - 10000';
+    END IF;
+END$$
+DELIMITER ;
+5.	Книги з однаковим кодом повинні мати однакові дані.
+DELIMITER $$
+
+CREATE TRIGGER trigger_5 BEFORE INSERT ON books
+FOR EACH ROW
+IF code = NEW.code
+THEN
+  IF (is_new != NEW.is_new OR book_name != NEW.book_name OR price != NEW.price OR publisher != NEW.publisher OR pages_count != NEW.pages_count OR
+        format != NEW.format OR date != NEW.date OR circulation != NEW.circulation OR theme != NEW.theme OR category != NEW.category)
+    THEN
+      SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Книги з однаковими кодами повинні містити однакові дані.';
+    END IF;
+END IF $$
+
+6.	При спробі видалення книги видається інформація про кількість видалених рядків. Якщо користувач не "dbo", то видалення забороняється.
+DELIMITER $$
+
+CREATE TRIGGER trigger_6 BEFORE DELETE ON books
+FOR EACH ROW
+BEGIN 
+ if SUBSTRING_INDEX(CURRENT_USER(), '@', 1) != "root"
+ THEN 
+ SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Кількість більша 10';
+ END IF;
+END $$
+
+DELIMITER ;
+7.	Користувач "dbo" не має права змінювати ціну книги.
+
+DELIMITER $$
+
+CREATE TRIGGER trigger_7 BEFORE UPDATE ON books
+FOR EACH ROW
+BEGIN 
+ if OLD.price != NEW.price && SUBSTRING_INDEX(CURRENT_USER(), '@', 1) != "root"
+ THEN
+ SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Кількість більша 10';
+ END IF;
+END $$
+
+DELIMITER ;
+8.	Видавництва ДМК і Еком підручники не видають.
+
+DELIMITER $$
+
+CREATE TRIGGER trigger_8 BEFORE INSERT ON books
+FOR EACH ROW
+BEGIN 
+ if ((SELECT id from publishers WHERE name = "ДМК") = NEW.publisher) || ((SELECT id from publishers WHERE name = "Еком") = NEW.publisher) &&
+ ((SELECT id from book_categories WHERE name = "підручник") = NEW.category)
+ THEN
+ SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Видавництва ДМК і Еком підручники не видають.';
+ END IF;
+END $$
+
+9.	Видавництво не може випустити більше 10 новинок протягом одного місяця поточного року.
+
+DELIMITER $$
+
+CREATE TRIGGER trigger_9 BEFORE INSERT ON books
+FOR EACH ROW
+BEGIN 
+ if NEW.is_new = true && (SELECT COUNT(*) from books as b WHERE publisher = NEW.publisher && MONTH(date) = MONTH(NEW.date) && YEAR(date) = YEAR(NEW.date)) > 10
+ THEN
+ SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Видавництва ДМК і Еком підручники не видають.';
+ END IF;
+END $$
+
+10.	Видавництво BHV не випускає книги формату 60х88 / 16.
+
+
+DELIMITER $$
+
+CREATE TRIGGER trigger_10 BEFORE INSERT ON books
+FOR EACH ROW
+BEGIN 
+ if ((SELECT id  from publishers WHERE name = "BHV") = NEW.publisher) && ((SELECT id from formats WHERE name = "60х88/16") = NEW.format)
+ THEN
+ SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Видавництво BHV не випускає книги формату 60х88 / 16.';
+ END IF;
+END $$
+
+DELIMITER ;
